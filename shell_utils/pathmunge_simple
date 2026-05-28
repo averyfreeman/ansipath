@@ -1,0 +1,19 @@
+# adapted from Fedora /etc/profile
+
+pathmunge () {
+    [ -h "$1" ] && return
+    
+    # Resolve to an absolute physical path to fix literal string match mismatches
+    local abs_path=$(readlink -f "$1")
+
+    case ":${PATH}:" in
+        *:"$abs_path":*)
+            ;;
+        *)
+            if [ "$2" = "after" ] ; then
+                PATH=$PATH:$abs_path
+            else
+                PATH=$abs_path:$PATH
+            fi
+    esac
+}

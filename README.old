@@ -1,0 +1,29 @@
+# ansipath
+
+#### A super simple tool to parse your bash `ENV $PATH` variable with ansi codes, to make it prettier and more readable.
+
+Will alert you to duplicate and dead links, as well.
+
+---
+
+### Bonus: `pathmunge` function to safely add paths in your `.profile`, `.bash_profile`, `.zprofile`, etc.
+
+Use it to add `$PATH` directories instead of `export PATH="/your/executables/bin:$PATH"` to avoid duplicates
+
+---
+
+#### Portability:
+
+Since `ansipath` works without using any python libraries other than `os`, it should work across all platforms (bash, zsh, etc.) and on essentially any modern version of Python3.
+
+#### Installation:
+
+git clone https://github.com/averyfreeman/ansipath
+cd ansipath
+uv tool install .
+
+#### OR add the one-liner to your .bashrc:
+
+echo 'source "$(pwd)/ansipath_func.sh"' >> $HOME/.bashrc
+
+(note: this version that ONLY colors your `$PATH`)
