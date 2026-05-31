@@ -1,37 +1,30 @@
-# Overlay 'which' with a smart, colorized ansipath diagnostic fallback
-# save file as ~/.local/lib/whichfunc.sh (create folder if necessary)
-# 
-# ~/.{bash,zsh}rc files re-execute every time a shell is opened, so import
-# this in ~/.bash_profile, ~/.profile, or ~/.zprofile (etc.) using snippet:
-#
-# --- start whichfunc.sh import snippet ---- 
-# if ! [ -z "$XDG_USER_LIB" ] && [ "$XDG_USER_LIB" -ne "$HOME/.local/lib" ]; then
-#     export XDG_USER_LIB="$HOME/.local/lib:$XDG_USER_LIB";
-# else
-#     export XDG_USER_LIB="$HOME/.local/lib;
-# fi
-# if [[ -f "/usr/bin/which" && -f "$XDG_USER_LIB/whichfunc.sh" ]]; then
-#     source ${XDG_USER_LIB}/whichfunc.sh
-# fi 
-# --- finish whichfunc.sh import snippet ---- 
-
-which() {
-    # If no arguments are passed, fall back to the standard system 'which'
-    if [ -z "$1" ]; then
+unalias which 2>/dev/null
+which () {
+    # 1. Handle empty arguments
+    if [[ -z "$1" ]]; then
         command which
-        return $?
+        return "$?"
     fi
-    # Execute the real 'which' command, capturing both stdout and stderr
-    local raw_output
-    raw_output=$(command which "$1" 2>&1)
-    local exit_code=$?
 
-    # Pass exit code 1 output to ansipath for formatting
+    # 2. Silently check if the command exists
+    command which "$1" >/dev/null 2>&1
+    local exit_code="$?"
+
+    # 3. Handle Failure (Binary not found)
     if [[ "$exit_code" -eq 1 ]]; then
-        ansipath "$raw_output"; else
-        printf "$raw_output";
+        # Dynamically locate the system's actual 'which' binary
+        local real_which
+        real_which=$(command -v which 2>/dev/null || echo "/usr/bin/which")
+
+        # Print the canonical system prefix error message
+        printf "%s: no %s in:\n" "$real_which" "$1"
+
+        # Simply execute your custom tool without arguments to display the colorized $PATH
+        ansipath
+    else
+        # 4. Handle Success (Print the path to the found binary)
+        command which "$1"
     fi
 
-    # Preserve the original exit code of the 'which' command
-    return $exit_code
+    return "$exit_code"
 }

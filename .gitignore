@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# not ready to get rid of yet
+*.old
+
+# just in case
+.env
+.env.local
