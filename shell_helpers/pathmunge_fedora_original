@@ -1,4 +1,4 @@
-# adapted from Fedora /etc/profile
+# from Fedora 44 /etc/profile
 
 pathmunge () {
     [ -h "$1" ] && return
