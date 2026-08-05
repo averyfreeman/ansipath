@@ -1,41 +1,41 @@
-==================================================================
-         🚀 Ansipath Manual Installation Instructions        
-==================================================================
+# Ansipath manual installation
 
-1. Check if running inside Windows CMD or PowerShell (unsupported)
+The helper installer supports Bash and Zsh on Unix-like systems. Run these
+commands from a shell, not Windows CMD or PowerShell.
+
+1. Confirm that the active shell is supported.
 
 ```sh
-if [ -n "$COMSPEC" ] || [ -n "$PSModulePath" ]; then
-    echo "Error: This script cannot be run from Windows CMD or PowerShell." >&2
-    echo "Maybe you meant to install inside WSL?"
-    exit 1
-fi
+case "${SHELL##*/}" in
+    bash|zsh) ;;
+    *)
+        echo "Error: install_helpers.sh supports Bash and Zsh only." >&2
+        exit 1
+        ;;
+esac
 ```
 
-2. Check if `uv` is installed
+2. Check that `uv` is installed.
 
 ```sh
 if ! command -v uv >/dev/null 2>&1; then
-    echo " ❌ Error: 'uv' package manager was not found." >&2
-    echo "Please install uv first: " >&2
-    echo "curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
+    echo "Error: 'uv' package manager was not found." >&2
+    echo "Install uv first: https://docs.astral.sh/uv/getting-started/installation/" >&2
     exit 1
 fi
 ```
 
-3. Build and Install ansipath to run Globally
+3. Install ansipath as a global `uv` tool from the repository root.
 
 ```sh
-echo " 📦 Building Python application binary via uv..."
-uv tool install . --force --no-managed-python
+uv tool install . --force
 ```
 
-4. Install the helper scripts:
+4. Install the helper scripts.
 
 ```sh
-echo " 📦 Installing and configuring helper scripts..."
-chmod +x && ./install_helpers.sh
-
+chmod +x ./install_helpers.sh
+./install_helpers.sh
 ```
 
-🎉 And you're done!
+Restart the terminal, or source the profile file reported by the installer.
