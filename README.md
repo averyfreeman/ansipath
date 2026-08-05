@@ -54,7 +54,7 @@ ansipath
 To quickly check exactly why a command might be missing or where it sits in the loop hierarchy, pass it right into the analyzer:
 
 ```bash
-ansipath "\$(which missingapp)"
+ansipath "$(which missing_command)"
 ```
 
 ---
