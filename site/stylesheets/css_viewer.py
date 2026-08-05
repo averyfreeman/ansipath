@@ -6,7 +6,7 @@ css_vars = {
     "--md-default-fg-color--light": "#030303",
     "--md-primary-fg-color": "#151515",
     "--md-primary-fg-color--light": "#304052",
-    "--md-primary-fg-color--dark": "#28fa36",
+    "--md-primary-fg-color--dark": "#f6f6f6",
     "--md-accent-fg-color": "#ff79fa",
     "--md-typeset-a-color": "#8be9fd",
     "--md-code-bg-color": "#44475a",
