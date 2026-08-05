@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/averyfreeman/ansipath"
+Homepage = "https://averyfreeman.github.com/ansipath"
 Repository = "https://github.com/averyfreeman/ansipath"
 
 [project.scripts]

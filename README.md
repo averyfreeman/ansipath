@@ -68,3 +68,14 @@ The helper installer supports Bash and Zsh. Restart your shell, or source the pr
 uv run mypy src/ tests/
 uv run pytest
 ```
+
+## Palette file viewer
+
+ ```bash
+ cd palettes
+ chmod +x palette_viewer.py
+ bash palette_viewer.py stonewall.json 
+ ```
+
+ ![pathmunge helper output](./screenshots/palette_viewer_example.png)
+
