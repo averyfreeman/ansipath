@@ -1,13 +1,18 @@
 [project]
 name = "ansipath"
 version = "0.1.0"
-description = ""
+description = "A colorized diagnostic view of shell PATH entries"
 readme = "README.md"
+license = { text = "GPL-3.0-only" }
 authors = [
     { name = "Avery Freeman", email = "avery@unixgreybeard.org" }
 ]
 requires-python = ">=3.10"
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/averyfreeman/ansipath"
+Repository = "https://github.com/averyfreeman/ansipath"
 
 [project.scripts]
 ansipath = "ansipath.main:main"
