@@ -1,0 +1,15 @@
+/* Dracula colors for the default dark documentation scheme. */
+[data-md-color-scheme="dracula"] {
+  --md-default-bg-color: #282a36;
+  --md-default-fg-color: #f8f8f2;
+  --md-default-fg-color--light: #bdc0c9;
+  --md-primary-fg-color: #44475a;
+  --md-primary-fg-color--light: #6272a4;
+  --md-primary-fg-color--dark: #282a36;
+  --md-accent-fg-color: #ff79c6;
+  --md-typeset-a-color: #8be9fd;
+  --md-code-bg-color: #44475a;
+  --md-code-fg-color: #f8f8f2;
+  --md-footer-bg-color: #21222c;
+  --md-footer-bg-color--dark: #191a21;
+}
