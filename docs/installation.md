@@ -34,11 +34,4 @@ cp -v palettes/catppuccin_mocha.json palettes/palette.json
 ./scripts/build.sh
 ```
 
-4. Install the helper scripts.
-
-```sh
-chmod +x ./install_helpers.sh
-./install_helpers.sh
-```
-
 Restart the terminal, or source the profile file reported by the installer.

@@ -32,35 +32,35 @@ The helper installer supports Bash and Zsh. Restart your shell, or source the pr
 
 ## Usage
 
-1. **`ansipath` command**
+### `ansipath` command
 
-   Print the current `$PATH`, one entry per line.
+Print the current `$PATH`, one entry per line.
 
-   ```bash
-   ansipath
-   ```
+```bash
+ansipath
+```
 
-   ![ansipath output](./screenshots/ansipath_example.png)
+![ansipath output](screenshots/ansipath_example.png)
 
-2. **`which` helper**
+### `which` helper
 
-   Run `which` as usual. If a command is missing, the installed helper prints the lookup error and runs `ansipath` automatically.
+Run `which` as usual. If a command is missing, the installed helper prints the lookup error and runs `ansipath` automatically.
 
-   ```bash
-   which missing_command
-   ```
+```bash
+which missing_command
+```
 
-   ![which helper output](./screenshots/whichfunc_example.png)
+![which helper output](screenshots/whichfunc_example.png)
 
-3. **`pathmunge` helper**
+### `pathmunge` helper
 
-   Prepend, append, or remove a directory from `$PATH` in the current shell.
+Prepend, append, or remove a directory from `$PATH` in the current shell.
 
-   ```bash
-   pathmunge prepend ~/.local/bin
-   ```
+```bash
+pathmunge prepend ~/.local/bin
+```
 
-   ![pathmunge helper output](./screenshots/pathmunge_example.png)
+![pathmunge helper output](screenshots/pathmunge_example.png)
 
 ## Development
 
