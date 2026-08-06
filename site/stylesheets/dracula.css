@@ -1,15 +1,173 @@
-/* Dracula colors for the default dark documentation scheme. */
+/* Custom Dracula / Cyberpunk High-Contrast Neon colors for dark scheme */
 [data-md-color-scheme="dracula"] {
-  --md-default-bg-color: #282a36;
-  --md-default-fg-color: #f8f8f2;
-  --md-default-fg-color--light: #bdc0c9;
-  --md-primary-fg-color: #44475a;
-  --md-primary-fg-color--light: #6272a4;
-  --md-primary-fg-color--dark: #f6f6f6;
-  --md-accent-fg-color: #ff79c6;
-  --md-typeset-a-color: #8be9fd;
-  --md-code-bg-color: #44475a;
-  --md-code-fg-color: #f8f8f2;
-  --md-footer-bg-color: #21222c;
-  --md-footer-bg-color--dark: #191a21;
+  /* Goal 3: Make background and code snippets darker */
+  --md-default-bg-color: #0a0b10;             /* Ultra-dark black background */
+  --md-code-bg-color: #030406;                /* Deep black for code snippets */
+  --md-footer-bg-color: #07080c;              /* Sleek dark footer background */
+  --md-footer-bg-color--dark: #030406;        /* Deep black bottom footer */
+  --md-primary-fg-color: #0d0e14;             /* Very dark header background */
+  --md-primary-fg-color--dark: #050608;       /* Very dark primary fallback */
+
+  /* Goal 1: Lighten dark/muted text colors on dark background to ensure maximum legibility */
+  --md-default-fg-color: #ffffff;             /* Crisp bright white text */
+  --md-default-fg-color--light: #e6e8ee;      /* High contrast bright gray for secondary/inactive text */
+  --md-default-fg-color--lighter: #cbd0dc;    /* High contrast gray for tertiary text */
+  --md-default-fg-color--lightest: #a0a6b4;   /* Visible borders/dividers and placeholder text */
+  --md-code-fg-color: #ffffff;                /* Bright white default code foreground */
+
+  /* Goal 2: Make colors more bright / neon */
+  --md-accent-fg-color: #ff007f;              /* Hot neon pink */
+  --md-primary-fg-color--light: #bc85ff;      /* Bright neon purple for search/active elements */
+  --md-typeset-a-color: #00f0ff;              /* Radiant electric neon cyan for links */
+}
+
+/* Custom Scrollbars to match the ultra-dark neon theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0b10;
+}
+::-webkit-scrollbar-thumb {
+  background: #25283a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff007f; /* glow neon pink on hover */
+}
+
+/* Make inline code blocks super clean and stand out with neon pink on dark */
+code {
+  background-color: #030406 !important;
+  color: #ff2ea6 !important;
+  padding: 0.15em 0.35em !important;
+  border-radius: 4px;
+  border: 1px solid #1a1c26;
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+}
+
+/* Enhancing side navigation link legibility and hover styles */
+.md-nav__link {
+  color: var(--md-default-fg-color--light) !important;
+}
+.md-nav__link:hover,
+.md-nav__link--active,
+.md-nav__link--active .md-nav__link {
+  color: var(--md-accent-fg-color) !important;
+  font-weight: bold;
+}
+
+/* Header text & buttons vibrancy */
+.md-header__title, .md-header__button {
+  color: #ffffff !important;
+}
+.md-header__button:hover {
+  color: var(--md-accent-fg-color) !important;
+}
+
+/* Search results and text contrast */
+.md-search-result__link {
+  color: var(--md-default-fg-color) !important;
+}
+.md-search-result__article {
+  background-color: #0c0d14 !important;
+  border: 1px solid #1c1e2a !important;
+}
+
+/* Admonitions styling for super crisp and beautiful contrast */
+.md-typeset .admonition {
+  background-color: #0c0d14 !important;
+  border-left-color: var(--md-accent-fg-color) !important;
+  color: var(--md-default-fg-color) !important;
+}
+.md-typeset .admonition-title {
+  color: var(--md-accent-fg-color) !important;
+  font-weight: bold !important;
+}
+
+/* Goal 4: Get a highlightjs syntax theme that better complements the site colors
+   Custom Neon Dracula / Catppuccin Mocha themed high-contrast code highlighting */
+pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1.25em;
+  border-radius: 8px;
+  background: #030406 !important;   /* Deepest black for code snippets background */
+  color: #ffffff !important;         /* Ultra-clean white default text */
+  font-size: 0.88em;
+  line-height: 1.6;
+  border: 1px solid #1c1e2e;         /* Thin dark border for sleek outline */
+}
+
+/* Comments: Neon lavender (bright & easy to read, no dark text on dark bg) */
+.hljs-comment,
+.hljs-quote {
+  color: #798bc4 !important;
+  font-style: italic;
+}
+
+/* Keywords, Storage, Option Tags: Neon purple/magenta */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-type,
+.hljs-section,
+.hljs-doctag {
+  color: #d600ff !important;
+  font-weight: bold;
+}
+
+/* Strings, Success, Inherited Class: Electric neon green */
+.hljs-string,
+.hljs-addition,
+.hljs-title.class_.inherited__ {
+  color: #39ff14 !important;
+}
+
+/* Numbers, Booleans, Constants, Literals, Syms: Electric neon orange */
+.hljs-number,
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-variable.constant_,
+.hljs-link {
+  color: #ff9900 !important;
+  font-weight: bold;
+}
+
+/* Functions, Methods, and Class/Tag Names: Hot neon pink */
+.hljs-title,
+.hljs-title.function_,
+.hljs-function .hljs-title,
+.hljs-name {
+  color: #ff00a0 !important;
+  font-weight: bold;
+}
+
+/* Built-ins, RegEx, Support classes: Neon cyan/aqua */
+.hljs-built_in,
+.hljs-regexp,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: #00ffff !important;
+}
+
+/* Attributes, Properties, Params: Neon yellow */
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-params {
+  color: #fffb00 !important;
+}
+
+/* Meta, Tags: Vivid neon peach/pink */
+.hljs-meta,
+.hljs-tag {
+  color: #ff54b0 !important;
+}
+
+/* Deletion/Error: Crimson neon red */
+.hljs-deletion {
+  color: #ff003c !important;
 }
