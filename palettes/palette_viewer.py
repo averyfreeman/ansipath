@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Inspect palette JSON files and preview embedded ANSI escape sequences."""
+
 import json
 import re
 import sys
@@ -16,7 +18,8 @@ def extract_strings(data):
         yield data
 
 
-def main():
+def main() -> None:
+    """Print each ANSI sequence and a compact colored palette preview."""
     if len(sys.argv) < 2:
         print(f"Usage: {sys.argv[0]} <path_to_json_file>", file=sys.stderr)
         sys.exit(1)

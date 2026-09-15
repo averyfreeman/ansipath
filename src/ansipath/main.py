@@ -1,3 +1,5 @@
+"""Command-line rendering of a diagnostic, colorized system PATH."""
+
 import json
 import os
 import sys
@@ -18,6 +20,7 @@ def load_config() -> dict[str, Any]:
 
 
 def main() -> None:
+    """Read a PATH-like value, render it, and report invalid entries."""
     # 1. Grab raw arguments if passed, otherwise default to active $PATH
     raw_source: str = (
         " ".join(sys.argv[1:]) if len(sys.argv) > 1 else os.environ.get("PATH", "")
