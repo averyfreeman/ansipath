@@ -133,6 +133,9 @@ func Install(source string, target Target, assets fs.FS, environment map[string]
 		}
 	}
 
+	if err := ensureDirectory(target.DataDir, target.Owner); err != nil {
+		return Result{}, fmt.Errorf("prepare helper directory: %w", err)
+	}
 	for _, name := range []string{"pathmunge.sh", "whichfunc.sh"} {
 		data, err := fs.ReadFile(assets, "shell_helpers/"+name)
 		if err != nil {
@@ -261,6 +264,18 @@ func writeAtomic(filename string, data []byte, mode os.FileMode, owner *Owner) (
 		}
 	}
 	return true, nil
+}
+
+func ensureDirectory(directory string, owner *Owner) error {
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return err
+	}
+	if owner != nil && os.Geteuid() == 0 {
+		if err := os.Chown(directory, owner.UID, owner.GID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func environmentMap(values []string) map[string]string {
