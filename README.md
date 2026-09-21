@@ -49,16 +49,18 @@ ansipath remove-dupes    # clean existing shell-init PATH assignments
 
 `remove-dupes` prints every changed file, line, and path. It then asks
 `Undo? N/y`; entering `y` restores the original files. To inspect an
-environment value without changing the parent shell, use:
+environment value and apply cleanup to the current shell, use:
 
 ```sh
-ansipath remove-dupes --env
+eval "$(ansipath remove-dupes --env)"
 ```
 
-The environment mode is output-only: it prints an auditable cleanup and a
-cleaned `export PATH` assignment suitable for review or evaluation in a child
-shell. It does not prompt because a child process cannot commit changes to its
-parent environment.
+The environment mode emits shell-safe audit comments, one `pathmunge remove`
+call for each entry being removed, and a final cleaned `export PATH=...` line.
+Duplicate entries are removed `N-1` times so one copy remains. The final export
+is copied to the clipboard automatically when a supported clipboard utility is
+available; otherwise, copy that last line manually. It does not prompt because
+a child process cannot directly change its parent shell.
 
 The shell rewriter recognizes `export PATH="..."`, `PATH="..."`, and bare
 `PATH` anchors. It loads `pathmunge` before generated calls, preserves the

@@ -58,11 +58,13 @@ ansipath remove-dupes
 ```
 
 The command prints an audit trail, asks `Undo? N/y`, and restores the original
-files if you answer `y`. For an environment value, use:
+files if you answer `y`. To clean the already-running shell environment, use:
 
 ```sh
-ansipath remove-dupes --env
+eval "$(ansipath remove-dupes --env)"
 ```
 
-This prints the cleaned export for review; it is output-only because a child
-process cannot mutate its parent shell environment.
+The environment mode emits one removal command per dead entry or duplicate
+occurrence, followed by an explicit cleaned `export PATH=...`. Duplicate paths
+are removed `N-1` times, leaving one copy. The final export is copied to the
+clipboard automatically when supported; otherwise, copy the last line manually.

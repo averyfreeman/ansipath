@@ -329,10 +329,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Quick start
       
     </span>
   </a>
@@ -340,60 +340,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#ansipath-command" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ansipath command
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#which-helper" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        which helper
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pathmunge-helper" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pathmunge helper
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Development
+        Commands
       
     </span>
   </a>
@@ -473,10 +423,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Quick start
       
     </span>
   </a>
@@ -484,60 +434,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#commands" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#ansipath-command" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ansipath command
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#which-helper" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        which helper
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pathmunge-helper" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pathmunge helper
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Development
+        Commands
       
     </span>
   </a>
@@ -565,35 +465,43 @@
 
 
 <h1 id="ansipath">ansipath 🌈</h1>
-<p><code>ansipath</code> makes <code>$PATH</code> legible: each entry is printed on its own line with colors based on directory depth, duplicate entries are highlighted, and dead directories are called out.</p>
+<p><code>ansipath</code> makes <code>$PATH</code> legible: each entry is printed on its own line with
+colors based on directory depth, duplicate entries are highlighted, and dead
+directories are called out.</p>
 <h2 id="features">Features</h2>
 <ul>
 <li>A portable Go binary with no runtime dependencies.</li>
 <li>Colorized <code>$PATH</code> output and duplicate/dead-path diagnostics.</li>
-<li>Palette switching stored under <code>$XDG_STATE_HOME/ansipath</code> or <code>$HOME/.local/state/ansipath</code>.</li>
+<li>Palette switching stored under <code>$XDG_STATE_HOME/ansipath</code> (or
+  <code>$HOME/.local/state/ansipath</code>).</li>
 <li>Bash and Zsh <code>pathmunge</code> and <code>which</code> helpers.</li>
-<li>Shell-init rewriting for common Bash and Zsh profiles.</li>
+<li>Shell-init rewriting for <code>.bashrc</code>, <code>.bash_profile</code>, <code>.profile</code>, <code>.zprofile</code>,
+  and <code>.zshrc</code>.</li>
 </ul>
-<h2 id="installation">Installation</h2>
-<p>Build and install the single binary from the repository root:</p>
-<pre><code class="language-bash">go build -trimpath -o ansipath .
+<h2 id="quick-start">Quick start</h2>
+<pre><code class="language-sh">go build -trimpath -o ansipath .
 ./ansipath install
+ansipath
 </code></pre>
-<p><code>ansipath install</code> installs the executable under <code>$HOME/.local/bin</code>, copies helpers under <code>$HOME/.local/share/ansipath/shell_helpers</code>, and updates existing shell-init files. With <code>sudo</code>, it targets <code>SUDO_USER</code>’s shell files and installs under <code>/usr/bin</code>.</p>
-<h2 id="usage">Usage</h2>
-<pre><code class="language-bash">ansipath                 # render the current PATH
+<p>For a system installation, use <code>sudo ./ansipath install</code>. The installer uses
+<code>SUDO_USER</code> to update that user’s shell files while installing the binary under
+<code>/usr/bin</code>.</p>
+<h2 id="commands">Commands</h2>
+<pre><code class="language-sh">ansipath                 # render the current PATH
 ansipath --help          # show all commands
 ansipath palette list    # list palettes
 ansipath palette dracula # select a palette
 ansipath remove-dupes    # clean shell-init PATH assignments
+ansipath remove-dupes --env
 </code></pre>
+<p><code>remove-dupes</code> prints an audit trail and asks <code>Undo? N/y</code>; answering <code>y</code>
+restores the original shell files. To clean the current shell as well, run:</p>
+<pre><code class="language-sh">eval &quot;$(ansipath remove-dupes --env)&quot;
+</code></pre>
+<p>The <code>--env</code> form emits sourceable removal commands and ends with an explicit
+cleaned export. That final export is copied automatically when a supported
+clipboard utility is available.</p>
 <p><img alt="ansipath output" src="screenshots/ansipath_example.png" /></p>
-<p><code>remove-dupes</code> prints an audit trail and asks <code>Undo? N/y</code>; answering <code>y</code> restores the original shell files. The <code>--env</code> form prints a cleaned export because a child process cannot mutate its parent shell.</p>
-<h2 id="development">Development</h2>
-<pre><code class="language-bash">go test ./...
-go vet ./...
-go build -trimpath -o ansipath .
-</code></pre>
 
 
 

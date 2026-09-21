@@ -116,6 +116,54 @@ func TestRunRemoveDupesRestoresChangesOnY(t *testing.T) {
 	}
 }
 
+func TestRunRemoveDupesEnvEmitsSourceableCleanupAndCopiesExport(t *testing.T) {
+	home := t.TempDir()
+	live := filepath.Join(home, "live")
+	clipboardDir := filepath.Join(home, "clipboard")
+	capture := filepath.Join(home, "captured")
+	dead := filepath.Join(home, "missing")
+	for _, directory := range []string{live, clipboardDir} {
+		if err := os.Mkdir(directory, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	pbcopy := filepath.Join(clipboardDir, "pbcopy")
+	if err := os.WriteFile(pbcopy, []byte("#!/bin/sh\n/bin/cat > \"$ANSIPATH_CLIPBOARD_CAPTURE\"\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", strings.Join([]string{live, live, dead, dead, clipboardDir}, ":"))
+	t.Setenv("ANSIPATH_CLIPBOARD_CAPTURE", capture)
+	var stdout, stderr bytes.Buffer
+
+	code := app.Run([]string{"remove-dupes", "--env"}, strings.NewReader(""), &stdout, &stderr, testAssets())
+	if code != 0 {
+		t.Fatalf("Run exit code = %d, stderr = %q", code, stderr.String())
+	}
+	output := stdout.String()
+	if strings.Count(output, "pathmunge remove '"+live+"'") != 1 {
+		t.Fatalf("duplicate removal count is wrong: %q", output)
+	}
+	if strings.Count(output, "pathmunge remove '"+dead+"'") != 2 {
+		t.Fatalf("dead removal count is wrong: %q", output)
+	}
+	if !strings.Contains(output, "# changed: env PATH removed duplicate") ||
+		!strings.Contains(output, "# changed: env PATH removed dead") {
+		t.Fatalf("sourceable audit comments missing: %q", output)
+	}
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	wantExport := "export PATH='" + live + ":" + clipboardDir + "'"
+	if lines[len(lines)-1] != wantExport {
+		t.Fatalf("final export = %q, want %q", lines[len(lines)-1], wantExport)
+	}
+	copied, err := os.ReadFile(capture)
+	if err != nil {
+		t.Fatalf("read clipboard capture: %v", err)
+	}
+	if string(copied) != wantExport+"\n" {
+		t.Fatalf("clipboard content = %q, want %q", copied, wantExport+"\n")
+	}
+}
+
 func TestRunRendersPathFromEnvironment(t *testing.T) {
 	t.Setenv("PATH", "/usr/bin:/bin")
 	t.Setenv("HOME", t.TempDir())

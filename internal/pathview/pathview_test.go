@@ -16,7 +16,7 @@ func TestRenderReportsColorizedEntriesAndDiagnostics(t *testing.T) {
 	}
 
 	output, err := pathview.Render(
-		"/usr/bin:/usr/bin:/missing",
+		"/usr/bin:/usr/bin:/missing:/missing",
 		style,
 		func(path string) bool { return path != "/missing" },
 	)
@@ -26,11 +26,11 @@ func TestRenderReportsColorizedEntriesAndDiagnostics(t *testing.T) {
 
 	for _, want := range []string{
 		"G/usrR/binRESET",
-		"G/missingRESET DIMRED[DEAD PATH]RESET",
+		"G/missingRESET DIMRED[DEAD LINK]RESET",
 		"Duplicate entries detected",
 		"/usr/bin (2 times)",
 		"Broken paths found",
-		"  • /missing",
+		"  • /missing (2 times)",
 	} {
 		if !strings.Contains(output, want) {
 			t.Errorf("output missing %q:\n%s", want, output)

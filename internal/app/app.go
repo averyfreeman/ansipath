@@ -1,7 +1,6 @@
 package app
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -69,16 +68,7 @@ func runRemoveDupes(args []string, in io.Reader, out, errOut io.Writer) int {
 	}
 
 	if environmentMode {
-		cleaned, changes := shellinit.CleanPathValue(os.Getenv("PATH"), nil)
-		for _, change := range changes {
-			_, _ = fmt.Fprintf(out, "changed: env PATH removed %s %s\n", change.Reason, change.Path)
-		}
-		if len(changes) == 0 {
-			_, _ = io.WriteString(out, "No duplicate or dead PATH entries found.\n")
-			return 0
-		}
-		_, _ = fmt.Fprintf(out, "export PATH=%s\n", shellQuote(cleaned))
-		return 0
+		return runEnvironmentCleanup(out)
 	}
 
 	environment := environmentMap(os.Environ())
@@ -134,12 +124,13 @@ func runRemoveDupes(args []string, in io.Reader, out, errOut io.Writer) int {
 		_, _ = io.WriteString(out, "No duplicate or dead PATH entries found.\n")
 		return 0
 	}
-	_, _ = io.WriteString(out, "Undo? N/y\n")
-	answer, readErr := bufio.NewReader(in).ReadString('\n')
+	_, _ = io.WriteString(out, "Undo? N/y ")
+	answer, readErr := readUndoResponse(in)
+	_, _ = io.WriteString(out, "\n")
 	if readErr != nil && !errors.Is(readErr, io.EOF) {
 		return fail(errOut, "read undo response: %v", readErr)
 	}
-	if strings.EqualFold(strings.TrimSpace(answer), "y") {
+	if answer {
 		if err := restoreOriginals(originals, target.Owner); err != nil {
 			return fail(errOut, "undo changes: %v", err)
 		}
@@ -380,6 +371,7 @@ With no command, ansipath renders the current PATH. A positional PATH
 argument renders that value instead.
 
 remove-dupes edits existing shell-init files, prints an audit trail, and asks
-Undo? N/y. With --env it only prints a cleaned export because child processes
-cannot change their parent shell environment.
+Undo? N/y. With --env it prints sourceable cleanup commands and a final
+cleaned export; use eval "$(ansipath remove-dupes --env)" to apply it to the
+current shell.
 `

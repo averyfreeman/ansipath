@@ -38,7 +38,7 @@ func Render(pathSource string, style Style, exists func(string) bool) (string, e
 
 	counts := make(map[string]int, len(entries))
 	orderedPaths := make([]string, 0, len(entries))
-	deadPaths := make([]string, 0)
+	deadCounts := make(map[string]int)
 	rendered := make([]string, 0, len(entries))
 	for _, entry := range entries {
 		if counts[entry] == 0 {
@@ -48,8 +48,8 @@ func Render(pathSource string, style Style, exists func(string) bool) (string, e
 
 		line := colorizeLine(entry, style.Palette) + style.Reset
 		if !exists(entry) {
-			line += " " + style.DimRed + "[DEAD PATH]" + style.Reset
-			deadPaths = append(deadPaths, entry)
+			line += " " + style.DimRed + "[DEAD LINK]" + style.Reset
+			deadCounts[entry]++
 		}
 		rendered = append(rendered, line)
 	}
@@ -75,13 +75,9 @@ func Render(pathSource string, style Style, exists func(string) bool) (string, e
 		}
 	}
 
-	if len(deadPaths) > 0 {
-		uniqueDead := make(map[string]struct{}, len(deadPaths))
-		for _, path := range deadPaths {
-			uniqueDead[path] = struct{}{}
-		}
-		dead := make([]string, 0, len(uniqueDead))
-		for path := range uniqueDead {
+	if len(deadCounts) > 0 {
+		dead := make([]string, 0, len(deadCounts))
+		for path := range deadCounts {
 			dead = append(dead, path)
 		}
 		sort.Strings(dead)
@@ -92,7 +88,11 @@ func Render(pathSource string, style Style, exists func(string) bool) (string, e
 		output.WriteString(style.Reset)
 		output.WriteByte('\n')
 		for _, path := range dead {
-			fmt.Fprintf(&output, "  • %s\n", path)
+			fmt.Fprintf(&output, "  • %s", path)
+			if deadCounts[path] > 1 {
+				fmt.Fprintf(&output, " (%d times)", deadCounts[path])
+			}
+			output.WriteByte('\n')
 		}
 	}
 

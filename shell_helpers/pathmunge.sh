@@ -32,21 +32,38 @@ pathmunge() {
 
     if [ "$ansipath_action" = remove ]; then
         ansipath_found=0
+        ansipath_removed=0
         ansipath_new_path=
-        ansipath_old_ifs=$IFS
-        IFS=:
-        for ansipath_entry in ${PATH-}; do
-            if [ "$ansipath_entry" = "$ansipath_path" ]; then
-                ansipath_found=1
-                continue
+        ansipath_remaining=${PATH-}
+        while :; do
+            case "$ansipath_remaining" in
+                *:*)
+                    ansipath_entry=${ansipath_remaining%%:*}
+                    ansipath_remaining=${ansipath_remaining#*:}
+                    ansipath_done=0
+                    ;;
+                *)
+                    ansipath_entry=$ansipath_remaining
+                    ansipath_remaining=
+                    ansipath_done=1
+                    ;;
+            esac
+
+            if [ -n "$ansipath_entry" ]; then
+                if [ "$ansipath_removed" -eq 0 ] && [ "$ansipath_entry" = "$ansipath_path" ]; then
+                    ansipath_found=1
+                    ansipath_removed=1
+                elif [ -n "$ansipath_new_path" ]; then
+                    ansipath_new_path=$ansipath_new_path:$ansipath_entry
+                else
+                    ansipath_new_path=$ansipath_entry
+                fi
             fi
-            if [ -n "$ansipath_new_path" ]; then
-                ansipath_new_path=$ansipath_new_path:$ansipath_entry
-            else
-                ansipath_new_path=$ansipath_entry
+
+            if [ "$ansipath_done" -eq 1 ]; then
+                break
             fi
         done
-        IFS=$ansipath_old_ifs
         if [ "$ansipath_found" -eq 0 ]; then
             return 5
         fi

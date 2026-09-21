@@ -38,8 +38,14 @@ ansipath remove-dupes --env
 ```
 
 `remove-dupes` prints an audit trail and asks `Undo? N/y`; answering `y`
-restores the original shell files. The `--env` form is output-only and prints a
-cleaned export, because a child process cannot mutate its parent shell
-environment.
+restores the original shell files. To clean the current shell as well, run:
+
+```sh
+eval "$(ansipath remove-dupes --env)"
+```
+
+The `--env` form emits sourceable removal commands and ends with an explicit
+cleaned export. That final export is copied automatically when a supported
+clipboard utility is available.
 
 ![ansipath output](screenshots/ansipath_example.png)
