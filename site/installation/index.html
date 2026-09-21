@@ -353,38 +353,25 @@
   
 
 
-<h1 id="ansipath-manual-installation">Ansipath manual installation</h1>
-<p>The helper installer supports Bash and Zsh on Unix-like systems. Run these
-commands from a shell, not Windows CMD or PowerShell.</p>
-<ol>
-<li>Confirm that the active shell is supported.</li>
-</ol>
-<pre><code class="language-sh">case &quot;${SHELL##*/}&quot; in
-    bash|zsh) ;;
-    *)
-        echo &quot;Error: install_helpers.sh supports Bash and Zsh only.&quot; &gt;&amp;2
-        exit 1
-        ;;
-esac
+<h1 id="ansipath-installation">Ansipath installation</h1>
+<p><code>ansipath</code> is a single Go binary for Bash and Zsh on Unix-like systems.</p>
+<h2 id="build-and-install">Build and install</h2>
+<pre><code class="language-sh">go build -trimpath -o ansipath .
+./ansipath install
 </code></pre>
-<ol>
-<li>Check that <code>uv</code> is installed.</li>
-</ol>
-<pre><code class="language-sh">if ! command -v uv &gt;/dev/null 2&gt;&amp;1; then
-    echo &quot;Error: 'uv' package manager was not found.&quot; &gt;&amp;2
-    echo &quot;Install uv first: https://docs.astral.sh/uv/getting-started/installation/&quot; &gt;&amp;2
-    exit 1
-fi
+<p>The default installation writes the binary to <code>$HOME/.local/bin/ansipath</code>, helpers to <code>$HOME/.local/share/ansipath/shell_helpers</code>, and updates only shell-init files that already exist.</p>
+<pre><code class="language-sh">sudo ./ansipath install
 </code></pre>
-<ol>
-<li>Select the palette and install ansipath as a global <code>uv</code> tool from the
-repository root. The build script copies the selected palette into the package
-configuration before invoking <code>uv tool install</code>.</li>
-</ol>
-<pre><code class="language-sh">cp -v palettes/catppuccin_mocha.json palettes/palette.json
-./scripts/build.sh
+<p>When run through <code>sudo</code>, <code>SUDO_USER</code> determines the home directory and shell; the executable is installed under <code>/usr/bin</code> by default. Use <code>--prefix &quot;$HOME/.local&quot;</code> to select another prefix.</p>
+<h2 id="palettes">Palettes</h2>
+<pre><code class="language-sh">ansipath palette list
+ansipath palette dracula
 </code></pre>
-<p>Restart the terminal, or source the profile file reported by the installer.</p>
+<p>Palette selection is retained in <code>$XDG_STATE_HOME/ansipath/palette</code>, falling back to <code>$HOME/.local/state/ansipath/palette</code>.</p>
+<h2 id="cleanup">Cleanup</h2>
+<pre><code class="language-sh">ansipath remove-dupes
+</code></pre>
+<p>This removes duplicate or dead literal path entries from existing shell-init assignments, prints an audit trail, and prompts <code>Undo? N/y</code>. Answer <code>y</code> to restore the original files. <code>ansipath remove-dupes --env</code> prints a cleaned environment export because child processes cannot mutate their parent.</p>
 
 
 

@@ -565,46 +565,34 @@
 
 
 <h1 id="ansipath">ansipath 🌈</h1>
-<p>Discover <code>$PATH</code> legibility: print each path on a new line in a rainbow of colors, so you can actually read it.</p>
-<pre><code>leg•i•bil•i-ty | leja'bilade | noun
-the quality of being clear enough to read: we've increased the type size for
-greater legibility; design and layout clearly affect the legibility of the text.
-Syns: READABILITY, clarity, readableness, ease of reading
-</code></pre>
+<p><code>ansipath</code> makes <code>$PATH</code> legible: each entry is printed on its own line with colors based on directory depth, duplicate entries are highlighted, and dead directories are called out.</p>
 <h2 id="features">Features</h2>
 <ul>
-<li>Colorizes each <code>$PATH</code> entry by directory depth.</li>
-<li>Flags duplicate entries and directories that no longer exist.</li>
-<li>Includes <code>which</code> and <code>pathmunge</code> shell helpers for Bash and Zsh.</li>
+<li>A portable Go binary with no runtime dependencies.</li>
+<li>Colorized <code>$PATH</code> output and duplicate/dead-path diagnostics.</li>
+<li>Palette switching stored under <code>$XDG_STATE_HOME/ansipath</code> or <code>$HOME/.local/state/ansipath</code>.</li>
+<li>Bash and Zsh <code>pathmunge</code> and <code>which</code> helpers.</li>
+<li>Shell-init rewriting for common Bash and Zsh profiles.</li>
 </ul>
 <h2 id="installation">Installation</h2>
-<p>Install <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a>, then run these commands from the repository root:</p>
-<p>The default build uses <code>catppuccin_mocha</code>. To choose another palette, copy it to
-<code>palettes/palette.json</code> before building.</p>
-<pre><code class="language-bash">cp -v palettes/catppuccin_mocha.json palettes/palette.json
-./scripts/build.sh
-bash install_helpers.sh
+<p>Build and install the single binary from the repository root:</p>
+<pre><code class="language-bash">go build -trimpath -o ansipath .
+./ansipath install
 </code></pre>
-<p>The helper installer supports Bash and Zsh. Restart your shell, or source the profile file reported by the installer.</p>
+<p><code>ansipath install</code> installs the executable under <code>$HOME/.local/bin</code>, copies helpers under <code>$HOME/.local/share/ansipath/shell_helpers</code>, and updates existing shell-init files. With <code>sudo</code>, it targets <code>SUDO_USER</code>’s shell files and installs under <code>/usr/bin</code>.</p>
 <h2 id="usage">Usage</h2>
-<h3 id="ansipath-command"><code>ansipath</code> command</h3>
-<p>Print the current <code>$PATH</code>, one entry per line.</p>
-<pre><code class="language-bash">ansipath
+<pre><code class="language-bash">ansipath                 # render the current PATH
+ansipath --help          # show all commands
+ansipath palette list    # list palettes
+ansipath palette dracula # select a palette
+ansipath remove-dupes    # clean shell-init PATH assignments
 </code></pre>
 <p><img alt="ansipath output" src="screenshots/ansipath_example.png" /></p>
-<h3 id="which-helper"><code>which</code> helper</h3>
-<p>Run <code>which</code> as usual. If a command is missing, the installed helper prints the lookup error and runs <code>ansipath</code> automatically.</p>
-<pre><code class="language-bash">which missing_command
-</code></pre>
-<p><img alt="which helper output" src="screenshots/whichfunc_example.png" /></p>
-<h3 id="pathmunge-helper"><code>pathmunge</code> helper</h3>
-<p>Prepend, append, or remove a directory from <code>$PATH</code> in the current shell.</p>
-<pre><code class="language-bash">pathmunge prepend ~/.local/bin
-</code></pre>
-<p><img alt="pathmunge helper output" src="screenshots/pathmunge_example.png" /></p>
+<p><code>remove-dupes</code> prints an audit trail and asks <code>Undo? N/y</code>; answering <code>y</code> restores the original shell files. The <code>--env</code> form prints a cleaned export because a child process cannot mutate its parent shell.</p>
 <h2 id="development">Development</h2>
-<pre><code class="language-bash">uv run mypy src/ tests/
-uv run pytest
+<pre><code class="language-bash">go test ./...
+go vet ./...
+go build -trimpath -o ansipath .
 </code></pre>
 
 

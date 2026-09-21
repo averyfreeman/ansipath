@@ -1,18 +1,19 @@
 {
   lib,
-  python3Packages,
+  buildGoModule,
 }:
 
-python3Packages.buildPythonApplication rec {
+buildGoModule rec {
   pname = "ansipath";
-  version = "0.1.1";
-  pyproject = true;
+  version = "0.2.0";
 
   src = ./.;
 
-  nativeBuildInputs = [ python3Packages.hatchling ];
-
-  pythonImportsCheck = [ "ansipath" ];
+  vendorHash = null;
+  ldflags = [
+    "-s"
+    "-w"
+  ];
 
   meta = {
     description = "A colorized diagnostic view of shell PATH entries";

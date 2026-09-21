@@ -1,70 +1,44 @@
 # ansipath 🌈
 
-Discover `$PATH` legibility: print each path on a new line in a rainbow of colors, so you can actually read it.
-
-```
-leg•i•bil•i-ty | leja'bilade | noun
-the quality of being clear enough to read: we've increased the type size for
-greater legibility; design and layout clearly affect the legibility of the text.
-Syns: READABILITY, clarity, readableness, ease of reading
-```
+`ansipath` makes `$PATH` legible: each entry is printed on its own line with
+colors based on directory depth, duplicate entries are highlighted, and dead
+directories are called out.
 
 ## Features
 
-- Colorizes each `$PATH` entry by directory depth.
-- Flags duplicate entries and directories that no longer exist.
-- Includes `which` and `pathmunge` shell helpers for Bash and Zsh.
+- A portable Go binary with no runtime dependencies.
+- Colorized `$PATH` output and duplicate/dead-path diagnostics.
+- Palette switching stored under `$XDG_STATE_HOME/ansipath` (or
+  `$HOME/.local/state/ansipath`).
+- Bash and Zsh `pathmunge` and `which` helpers.
+- Shell-init rewriting for `.bashrc`, `.bash_profile`, `.profile`, `.zprofile`,
+  and `.zshrc`.
 
-## Installation
+## Quick start
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then run these commands from the repository root:
-
-The default build uses `catppuccin_mocha`. To choose another palette, copy it to
-`palettes/palette.json` before building.
-
-```bash
-cp -v palettes/catppuccin_mocha.json palettes/palette.json
-./scripts/build.sh
-bash install_helpers.sh
-```
-
-The helper installer supports Bash and Zsh. Restart your shell, or source the profile file reported by the installer.
-
-## Usage
-
-### `ansipath` command
-
-Print the current `$PATH`, one entry per line.
-
-```bash
+```sh
+go build -trimpath -o ansipath .
+./ansipath install
 ansipath
 ```
 
+For a system installation, use `sudo ./ansipath install`. The installer uses
+`SUDO_USER` to update that user’s shell files while installing the binary under
+`/usr/bin`.
+
+## Commands
+
+```sh
+ansipath                 # render the current PATH
+ansipath --help          # show all commands
+ansipath palette list    # list palettes
+ansipath palette dracula # select a palette
+ansipath remove-dupes    # clean shell-init PATH assignments
+ansipath remove-dupes --env
+```
+
+`remove-dupes` prints an audit trail and asks `Undo? N/y`; answering `y`
+restores the original shell files. The `--env` form prints a cleaned export,
+because a child process cannot mutate its parent shell environment.
+
 ![ansipath output](screenshots/ansipath_example.png)
-
-### `which` helper
-
-Run `which` as usual. If a command is missing, the installed helper prints the lookup error and runs `ansipath` automatically.
-
-```bash
-which missing_command
-```
-
-![which helper output](screenshots/whichfunc_example.png)
-
-### `pathmunge` helper
-
-Prepend, append, or remove a directory from `$PATH` in the current shell.
-
-```bash
-pathmunge prepend ~/.local/bin
-```
-
-![pathmunge helper output](screenshots/pathmunge_example.png)
-
-## Development
-
-```bash
-uv run mypy src/ tests/
-uv run pytest
-```

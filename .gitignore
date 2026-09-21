@@ -1,19 +1,20 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
+# Go build output
+ansipath
 dist/
-wheels/
-*.egg-info
 
-# Virtual environments
-.venv
+# Generated language caches
+__pycache__/
+*.py[cod]
 
-# not ready to get rid of yet
-*.old
-SUMMARY.md
-
-# just in case
+# Local metadata
+.DS_Store
 .env
 .env.local
-palettes_backup
+
+# Editor and generated documentation leftovers
+*.old
+SUMMARY.md
+site/
+
+# Local palette backups
+palettes_backup/

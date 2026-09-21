@@ -12,24 +12,25 @@ jobs:
   test-and-lint:
     name: Run Linting and Tests
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@v4
 
-      - name: Install Astral uv
-        uses: astral-sh/setup-uv@v5
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          enable-cache: true
+          go-version-file: go.mod
+          cache: true
 
-      - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
+      - name: Check Go formatting
+        run: test -z "$(gofmt -l .)"
 
-      - name: Validate Strict Type Hint Inferences (Mypy)
-        run: uv run mypy src/ tests/
+      - name: Run static analysis
+        run: go vet ./...
 
-      - name: Execute Automated Unit Tests (Pytest)
-        run: uv run pytest
+      - name: Execute automated tests
+        run: go test ./...
+
+      - name: Build single binary
+        run: CGO_ENABLED=0 go build -trimpath -o ansipath .

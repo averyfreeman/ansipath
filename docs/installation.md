@@ -1,37 +1,45 @@
-# Ansipath manual installation
+# Ansipath installation
 
-The helper installer supports Bash and Zsh on Unix-like systems. Run these
-commands from a shell, not Windows CMD or PowerShell.
+`ansipath` is a single Go binary for Bash and Zsh on Unix-like systems.
 
-1. Confirm that the active shell is supported.
-
-```sh
-case "${SHELL##*/}" in
-    bash|zsh) ;;
-    *)
-        echo "Error: install_helpers.sh supports Bash and Zsh only." >&2
-        exit 1
-        ;;
-esac
-```
-
-2. Check that `uv` is installed.
+## Build and install
 
 ```sh
-if ! command -v uv >/dev/null 2>&1; then
-    echo "Error: 'uv' package manager was not found." >&2
-    echo "Install uv first: https://docs.astral.sh/uv/getting-started/installation/" >&2
-    exit 1
-fi
+go build -trimpath -o ansipath .
+./ansipath install
 ```
 
-3. Select the palette and install ansipath as a global `uv` tool from the
-repository root. The build script copies the selected palette into the package
-configuration before invoking `uv tool install`.
+The default installation writes the binary to `$HOME/.local/bin/ansipath`,
+helpers to `$HOME/.local/share/ansipath/shell_helpers`, and updates only shell
+init files that already exist. It does not create missing profiles.
+
+For a system prefix while targeting the invoking user’s shell files:
 
 ```sh
-cp -v palettes/catppuccin_mocha.json palettes/palette.json
-./scripts/build.sh
+sudo ./ansipath install
 ```
 
-Restart the terminal, or source the profile file reported by the installer.
+When run through `sudo`, `SUDO_USER` determines the home directory and shell;
+the executable is installed under `/usr/bin` by default. Use
+`--prefix "$HOME/.local"` to select another prefix.
+
+## Palettes
+
+```sh
+ansipath palette list
+ansipath palette dracula
+```
+
+Palette selection is retained in `$XDG_STATE_HOME/ansipath/palette`, falling
+back to `$HOME/.local/state/ansipath/palette`.
+
+## Cleanup
+
+```sh
+ansipath remove-dupes
+```
+
+This removes duplicate or dead literal path entries from existing shell-init
+assignments, prints an audit trail, and prompts `Undo? N/y`. Answer `y` to
+restore the original files. `ansipath remove-dupes --env` instead prints a
+cleaned environment export because child processes cannot mutate their parent.

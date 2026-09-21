@@ -1,44 +1,68 @@
-# Ansipath manual installation
+# Ansipath installation
 
-The helper installer supports Bash and Zsh on Unix-like systems. Run these
-commands from a shell, not Windows CMD or PowerShell.
+`ansipath` is distributed as one Go binary. It supports Bash and Zsh shell
+initialization files on Unix-like systems.
 
-1. Confirm that the active shell is supported.
+## Build from source
 
-```sh
-case "${SHELL##*/}" in
-    bash|zsh) ;;
-    *)
-        echo "Error: install_helpers.sh supports Bash and Zsh only." >&2
-        exit 1
-        ;;
-esac
-```
-
-2. Check that `uv` is installed.
+Install Go, then run:
 
 ```sh
-if ! command -v uv >/dev/null 2>&1; then
-    echo "Error: 'uv' package manager was not found." >&2
-    echo "Install uv first: https://docs.astral.sh/uv/getting-started/installation/" >&2
-    exit 1
-fi
+go build -trimpath -o ansipath .
+./ansipath install
 ```
 
-3. Select the palette and install ansipath as a global `uv` tool from the
-repository root. The build script copies the selected palette into the package
-configuration before invoking `uv tool install`.
+The default user installation:
+
+- copies the binary to `$HOME/.local/bin/ansipath`;
+- copies shell helpers to `$HOME/.local/share/ansipath/shell_helpers`;
+- updates existing `.bashrc`, `.bash_profile`, `.profile`, `.zprofile`, and
+  `.zshrc` files selected for the active shell;
+- leaves missing shell files untouched.
+
+To install the runtime system-wide while updating the invoking user’s shell
+files, run:
 
 ```sh
-cp -v palettes/catppuccin_mocha.json palettes/palette.json
-./scripts/build.sh
+sudo ./ansipath install
 ```
 
-4. Install the helper scripts.
+This uses `SUDO_USER` to find the user’s home directory and shell files, and
+installs the binary under `/usr/bin`. A custom prefix is also supported:
 
 ```sh
-chmod +x ./install_helpers.sh
-./install_helpers.sh
+./ansipath install --prefix "$HOME/.local"
 ```
 
-Restart the terminal, or source the profile file reported by the installer.
+Source the changed shell file or start a new shell when installation finishes.
+
+## Palettes
+
+The default palette is `catppuccin_mocha`. Palettes are embedded in the binary
+and selected at runtime:
+
+```sh
+ansipath palette list
+ansipath palette dracula
+```
+
+The selection is stored in `$XDG_STATE_HOME/ansipath/palette`, or
+`$HOME/.local/state/ansipath/palette` when `XDG_STATE_HOME` is unset.
+
+## Cleanup
+
+Remove duplicate or dead literal path entries from existing shell-init files:
+
+```sh
+ansipath remove-dupes
+```
+
+The command prints an audit trail, asks `Undo? N/y`, and restores the original
+files if you answer `y`. For an environment value, use:
+
+```sh
+ansipath remove-dupes --env
+```
+
+This prints the cleaned export for review; a child process cannot mutate its
+parent shell environment.

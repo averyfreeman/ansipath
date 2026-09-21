@@ -23,7 +23,6 @@ theme:
   hljs_languages:
     - bash
     - json
-    - python
     - sh
     - yaml
 extra_javascript:
