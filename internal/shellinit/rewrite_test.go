@@ -72,6 +72,25 @@ func TestRewriteRecognizesBarePathAnchor(t *testing.T) {
 	}
 }
 
+func TestRewritePreservesInlineConditionalContext(t *testing.T) {
+	got, _, err := shellinit.Rewrite(
+		`if [ "$SHELL" = bash ]; then export PATH="/local:$PATH"; fi`+"\n",
+		shellinit.Options{
+			DataDir:     "/data/ansipath",
+			BinaryPath:  "/bin/ansipath",
+			Environment: map[string]string{"PATH": "/usr/bin"},
+		},
+	)
+	if err != nil {
+		t.Fatalf("Rewrite returned error: %v", err)
+	}
+	if strings.Contains(got, "export PATH=\"") ||
+		!strings.Contains(got, "if [ \"$SHELL\" = bash ]; then\n") ||
+		!strings.Contains(got, "    pathmunge prepend '/local'\nfi") {
+		t.Fatalf("inline conditional was not preserved:\n%s", got)
+	}
+}
+
 func TestRewriteIsIdempotent(t *testing.T) {
 	input := "export PATH=\"/one:$PATH\"\n"
 	options := shellinit.Options{
@@ -116,6 +135,28 @@ func TestCleanRemovesDuplicateAndDeadLiteralEntries(t *testing.T) {
 	}
 }
 
+func TestCleanPreservesInlineConditionalContext(t *testing.T) {
+	input := `if [ "$SHELL" = bash ]; then export PATH="/one:/one:$PATH"; fi` + "\n"
+	got, changes, err := shellinit.Clean(input, shellinit.CleanOptions{
+		Options: shellinit.Options{
+			DataDir:     "/data/ansipath",
+			BinaryPath:  "/bin/ansipath",
+			Environment: map[string]string{"PATH": "/usr/bin"},
+		},
+		Exists: func(path string) bool { return path == "/one" || path == "/usr/bin" },
+	})
+	if err != nil {
+		t.Fatalf("Clean returned error: %v", err)
+	}
+	if len(changes) != 1 || changes[0].Reason != "duplicate" {
+		t.Fatalf("unexpected changes: %#v", changes)
+	}
+	if !strings.Contains(got, "if [ \"$SHELL\" = bash ]; then\n") ||
+		!strings.Contains(got, "    pathmunge prepend '/one'\nfi") {
+		t.Fatalf("inline conditional was not preserved:\n%s", got)
+	}
+}
+
 func TestCleanPathValueRemovesDuplicatesAndDeadEntries(t *testing.T) {
 	got, changes := shellinit.CleanPathValue(
 		"/one:/one:/missing:/two",
@@ -126,5 +167,24 @@ func TestCleanPathValueRemovesDuplicatesAndDeadEntries(t *testing.T) {
 	}
 	if len(changes) != 2 || changes[0].Reason != "duplicate" || changes[1].Reason != "dead" {
 		t.Fatalf("unexpected changes: %#v", changes)
+	}
+}
+func TestCleanPathmungeCalls(t *testing.T) {
+	content := "pathmunge append '/tmp/live'\npathmunge append '/tmp/live'\npathmunge prepend '/tmp/dead'\n"
+	cleaned, changes, err := shellinit.Clean(content, shellinit.CleanOptions{
+		Options: shellinit.Options{DataDir: "/tmp/helpers", BinaryPath: "/tmp/ansipath"},
+		Exists:  func(path string) bool { return path == "/tmp/live" },
+	})
+	if err != nil {
+		t.Fatalf("Clean returned error: %v", err)
+	}
+	if len(changes) != 2 || changes[0].Reason != "duplicate" || changes[1].Reason != "dead" {
+		t.Fatalf("unexpected changes: %#v", changes)
+	}
+	if strings.Count(cleaned, "pathmunge append '/tmp/live'") != 1 {
+		t.Fatalf("expected one live pathmunge call, got:\n%s", cleaned)
+	}
+	if strings.Contains(cleaned, "/tmp/dead") {
+		t.Fatalf("dead path remained in cleaned profile:\n%s", cleaned)
 	}
 }

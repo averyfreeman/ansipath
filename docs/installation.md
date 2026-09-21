@@ -42,4 +42,5 @@ ansipath remove-dupes
 This removes duplicate or dead literal path entries from existing shell-init
 assignments, prints an audit trail, and prompts `Undo? N/y`. Answer `y` to
 restore the original files. `ansipath remove-dupes --env` instead prints a
-cleaned environment export because child processes cannot mutate their parent.
+cleaned environment export because child processes cannot mutate their parent;
+the environment form is output-only and does not prompt.

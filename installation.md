@@ -64,5 +64,5 @@ files if you answer `y`. For an environment value, use:
 ansipath remove-dupes --env
 ```
 
-This prints the cleaned export for review; a child process cannot mutate its
-parent shell environment.
+This prints the cleaned export for review; it is output-only because a child
+process cannot mutate its parent shell environment.

@@ -55,8 +55,10 @@ environment value without changing the parent shell, use:
 ansipath remove-dupes --env
 ```
 
-The environment mode prints an auditable cleanup and a cleaned `export PATH`
-assignment suitable for review or evaluation in a child shell.
+The environment mode is output-only: it prints an auditable cleanup and a
+cleaned `export PATH` assignment suitable for review or evaluation in a child
+shell. It does not prompt because a child process cannot commit changes to its
+parent environment.
 
 The shell rewriter recognizes `export PATH="..."`, `PATH="..."`, and bare
 `PATH` anchors. It loads `pathmunge` before generated calls, preserves the

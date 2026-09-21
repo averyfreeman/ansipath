@@ -49,6 +49,7 @@ type pathSegment struct {
 }
 
 var assignmentPattern = regexp.MustCompile(`^([[:space:]]*)(export[[:space:]]+)?PATH[[:space:]]*=[[:space:]]*(.*)$`)
+var pathmungePattern = regexp.MustCompile(`^([[:space:]]*)pathmunge[[:space:]]+(append|prepend)[[:space:]]+(.+)$`)
 
 // Rewrite replaces PATH assignments and ensures the helper loader is first.
 func Rewrite(content string, options Options) (string, []Change, error) {
@@ -69,6 +70,22 @@ func Rewrite(content string, options Options) (string, []Change, error) {
 	for index, line := range lines {
 		match := assignmentPattern.FindStringSubmatch(line.text)
 		if match == nil || strings.HasPrefix(strings.TrimSpace(line.text), "#") {
+			if inline, ok := findInlineAssignment(line.text); ok {
+				segments, err := parseAssignmentValue(inline.value)
+				if err != nil {
+					return "", nil, fmt.Errorf("parse PATH assignment on line %d: %w", index+1, err)
+				}
+				replacement, resultPath, paths, err := rewriteAssignment(inline.indent+"    ", segments, virtualPath, environment)
+				if err != nil {
+					return "", nil, fmt.Errorf("rewrite PATH assignment on line %d: %w", index+1, err)
+				}
+				virtualPath = resultPath
+				for _, replacementLine := range wrapInlineAssignment(inline.prefix, inline.suffix, replacement) {
+					rewritten = append(rewritten, sourceLine{text: replacementLine, ending: ""})
+				}
+				changes = append(changes, Change{Line: index + 1, Kind: "path assignment", Paths: paths})
+				continue
+			}
 			rewritten = append(rewritten, line)
 			continue
 		}
@@ -143,88 +160,60 @@ func Clean(content string, options CleanOptions) (string, []CleanChange, error) 
 	for index, line := range withoutBlock {
 		match := assignmentPattern.FindStringSubmatch(line.text)
 		if match == nil || strings.HasPrefix(strings.TrimSpace(line.text), "#") {
+			if inline, ok := findInlineAssignment(line.text); ok {
+				replacement, resultPath, resultSeen, cleanChanges, removed, err := cleanAssignment(inline.value, virtualPath, seen, exists, environment, inline.indent+"    ", index+1)
+				if err != nil {
+					return "", nil, err
+				}
+				virtualPath = resultPath
+				seen = resultSeen
+				changes = append(changes, cleanChanges...)
+				if removed {
+					for _, replacementLine := range wrapInlineAssignment(inline.prefix, inline.suffix, replacement) {
+						rewritten = append(rewritten, sourceLine{text: replacementLine})
+					}
+				} else {
+					rewritten = append(rewritten, line)
+				}
+				continue
+			}
+			if call, ok := parsePathmunge(line.text); ok {
+				value, err := expandSegment(call.value, environment)
+				if err == nil && value != "" && !strings.Contains(value, ":") {
+					reason := ""
+					if _, duplicate := seen[value]; duplicate {
+						reason = "duplicate"
+					} else if !exists(value) {
+						reason = "dead"
+					}
+					if reason != "" {
+						changes = append(changes, CleanChange{Line: index + 1, Reason: reason, Path: value})
+						continue
+					}
+					seen[value] = struct{}{}
+					if call.kind == "prepend" {
+						virtualPath = append([]string{value}, virtualPath...)
+					} else {
+						virtualPath = append(virtualPath, value)
+					}
+				}
+			}
 			rewritten = append(rewritten, line)
 			continue
 		}
-		rawSegments, err := parseAssignmentValue(match[3])
+		replacement, resultPath, resultSeen, cleanChanges, removed, err := cleanAssignment(match[3], virtualPath, seen, exists, environment, match[1], index+1)
 		if err != nil {
-			return "", nil, fmt.Errorf("parse PATH assignment on line %d: %w", index+1, err)
+			return "", nil, err
 		}
-		anchorIndex := -1
-		for segmentIndex, raw := range rawSegments {
-			if isPATHAnchor(strings.TrimSpace(raw)) {
-				if anchorIndex >= 0 {
-					return "", nil, fmt.Errorf("multiple PATH anchors are not supported on line %d", index+1)
-				}
-				anchorIndex = segmentIndex
-			}
-		}
-		assignmentSeen := seen
-		if anchorIndex < 0 {
-			assignmentSeen = make(map[string]struct{})
-		}
-		before := make([]string, 0)
-		after := make([]string, 0)
-		literalIndex := 0
-		removed := false
-		for _, raw := range rawSegments {
-			trimmed := strings.TrimSpace(raw)
-			if isPATHAnchor(trimmed) {
-				literalIndex++
-				continue
-			}
-			value, err := expandSegment(trimmed, environment)
-			if err != nil {
-				return "", nil, fmt.Errorf("expand PATH assignment on line %d: %w", index+1, err)
-			}
-			if value == "" {
-				literalIndex++
-				continue
-			}
-			reason := ""
-			if _, duplicate := assignmentSeen[value]; duplicate {
-				reason = "duplicate"
-			} else if !exists(value) {
-				reason = "dead"
-			}
-			if reason != "" {
-				changes = append(changes, CleanChange{Line: index + 1, Reason: reason, Path: value})
-				removed = true
-				literalIndex++
-				continue
-			}
-			assignmentSeen[value] = struct{}{}
-			if anchorIndex >= 0 && literalIndex < anchorIndex {
-				before = append(before, value)
-			} else {
-				after = append(after, value)
-			}
-			literalIndex++
-		}
-		if anchorIndex < 0 {
-			virtualPath = append([]string(nil), after...)
-			seen = assignmentSeen
-		} else {
-			virtualPath = append(append(append([]string(nil), before...), virtualPath...), after...)
-			seen = assignmentSeen
-		}
+		virtualPath = resultPath
+		seen = resultSeen
+		changes = append(changes, cleanChanges...)
 		if !removed {
 			rewritten = append(rewritten, line)
 			continue
 		}
-
-		if anchorIndex < 0 {
-			rewritten = append(rewritten, sourceLine{text: match[1] + "PATH=; export PATH"})
-			for _, value := range after {
-				rewritten = append(rewritten, sourceLine{text: match[1] + "pathmunge append " + shellQuote(value)})
-			}
-		} else {
-			for valueIndex := len(before) - 1; valueIndex >= 0; valueIndex-- {
-				rewritten = append(rewritten, sourceLine{text: match[1] + "pathmunge prepend " + shellQuote(before[valueIndex])})
-			}
-			for _, value := range after {
-				rewritten = append(rewritten, sourceLine{text: match[1] + "pathmunge append " + shellQuote(value)})
-			}
+		for _, replacementLine := range replacement {
+			rewritten = append(rewritten, sourceLine{text: replacementLine})
 		}
 	}
 
@@ -256,6 +245,91 @@ func Clean(content string, options CleanOptions) (string, []CleanChange, error) 
 	}
 	inserted = append(inserted, rewritten[insertAt:]...)
 	return renderLines(inserted), changes, nil
+}
+
+func cleanAssignment(rawValue string, current []string, seen map[string]struct{}, exists func(string) bool, environment map[string]string, indent string, lineNumber int) ([]string, []string, map[string]struct{}, []CleanChange, bool, error) {
+	rawSegments, err := parseAssignmentValue(rawValue)
+	if err != nil {
+		return nil, nil, nil, nil, false, fmt.Errorf("parse PATH assignment on line %d: %w", lineNumber, err)
+	}
+	anchorIndex := -1
+	for segmentIndex, raw := range rawSegments {
+		if isPATHAnchor(strings.TrimSpace(raw)) {
+			if anchorIndex >= 0 {
+				return nil, nil, nil, nil, false, fmt.Errorf("multiple PATH anchors are not supported on line %d", lineNumber)
+			}
+			anchorIndex = segmentIndex
+		}
+	}
+	assignmentSeen := seen
+	if anchorIndex < 0 {
+		assignmentSeen = make(map[string]struct{})
+	}
+	before := make([]string, 0)
+	after := make([]string, 0)
+	literalIndex := 0
+	removed := false
+	changes := make([]CleanChange, 0)
+	for _, raw := range rawSegments {
+		trimmed := strings.TrimSpace(raw)
+		if isPATHAnchor(trimmed) {
+			literalIndex++
+			continue
+		}
+		value, err := expandSegment(trimmed, environment)
+		if err != nil {
+			return nil, nil, nil, nil, false, fmt.Errorf("expand PATH assignment on line %d: %w", lineNumber, err)
+		}
+		if value == "" {
+			literalIndex++
+			continue
+		}
+		reason := ""
+		if _, duplicate := assignmentSeen[value]; duplicate {
+			reason = "duplicate"
+		} else if !exists(value) {
+			reason = "dead"
+		}
+		if reason != "" {
+			changes = append(changes, CleanChange{Line: lineNumber, Reason: reason, Path: value})
+			removed = true
+			literalIndex++
+			continue
+		}
+		assignmentSeen[value] = struct{}{}
+		if anchorIndex >= 0 && literalIndex < anchorIndex {
+			before = append(before, value)
+		} else {
+			after = append(after, value)
+		}
+		literalIndex++
+	}
+	resultPath := make([]string, 0)
+	if anchorIndex < 0 {
+		resultPath = append(resultPath, after...)
+	} else {
+		resultPath = append(resultPath, before...)
+		resultPath = append(resultPath, current...)
+		resultPath = append(resultPath, after...)
+	}
+	if !removed {
+		return nil, resultPath, assignmentSeen, changes, false, nil
+	}
+	replacement := make([]string, 0, len(before)+len(after)+1)
+	if anchorIndex < 0 {
+		replacement = append(replacement, indent+"PATH=; export PATH")
+		for _, value := range after {
+			replacement = append(replacement, indent+"pathmunge append "+shellQuote(value))
+		}
+	} else {
+		for valueIndex := len(before) - 1; valueIndex >= 0; valueIndex-- {
+			replacement = append(replacement, indent+"pathmunge prepend "+shellQuote(before[valueIndex]))
+		}
+		for _, value := range after {
+			replacement = append(replacement, indent+"pathmunge append "+shellQuote(value))
+		}
+	}
+	return replacement, resultPath, assignmentSeen, changes, true, nil
 }
 
 // CleanPathValue returns a cleaned PATH value and its audit changes.
@@ -387,6 +461,138 @@ func parseAssignmentValue(value string) ([]string, error) {
 	return strings.Split(value, ":"), nil
 }
 
+type inlineAssignment struct {
+	prefix string
+	suffix string
+	value  string
+	indent string
+}
+
+func findInlineAssignment(line string) (inlineAssignment, bool) {
+	quote := byte(0)
+	for index := 0; index < len(line); index++ {
+		char := line[index]
+		if quote != 0 {
+			if char == '\\' && quote == '"' {
+				index++
+				continue
+			}
+			if char == quote {
+				quote = 0
+			}
+			continue
+		}
+		if char == '\'' || char == '"' {
+			quote = char
+			continue
+		}
+		if index == 0 || !isCommandBoundary(line[index-1]) {
+			continue
+		}
+		start, valueStart, ok := inlineAssignmentAt(line, index)
+		if !ok || start == 0 {
+			continue
+		}
+		valueEnd := shellCommandEnd(line, valueStart)
+		return inlineAssignment{
+			prefix: line[:start],
+			suffix: line[valueEnd:],
+			value:  line[valueStart:valueEnd],
+			indent: leadingWhitespace(line),
+		}, true
+	}
+	return inlineAssignment{}, false
+}
+
+func inlineAssignmentAt(line string, index int) (int, int, bool) {
+	start := index
+	if strings.HasPrefix(line[index:], "export") {
+		index += len("export")
+		if index >= len(line) || !isShellWhitespace(line[index]) {
+			return 0, 0, false
+		}
+		for index < len(line) && isShellWhitespace(line[index]) {
+			index++
+		}
+	}
+	if !strings.HasPrefix(line[index:], "PATH") {
+		return 0, 0, false
+	}
+	index += len("PATH")
+	for index < len(line) && isShellWhitespace(line[index]) {
+		index++
+	}
+	if index >= len(line) || line[index] != '=' {
+		return 0, 0, false
+	}
+	index++
+	for index < len(line) && isShellWhitespace(line[index]) {
+		index++
+	}
+	return start, index, true
+}
+
+func shellCommandEnd(line string, start int) int {
+	quote := byte(0)
+	for index := start; index < len(line); index++ {
+		char := line[index]
+		if quote != 0 {
+			if char == '\\' && quote == '"' {
+				index++
+				continue
+			}
+			if char == quote {
+				quote = 0
+			}
+			continue
+		}
+		if char == '\'' || char == '"' {
+			quote = char
+			continue
+		}
+		if char == ';' || char == '}' {
+			return index
+		}
+	}
+	return len(line)
+}
+
+func wrapInlineAssignment(prefix, suffix string, replacement []string) []string {
+	prefix = strings.TrimRight(prefix, " \t")
+	if strings.HasSuffix(prefix, ";") {
+		prefix = strings.TrimRight(prefix[:len(prefix)-1], " \t")
+	}
+	suffix = strings.TrimSpace(suffix)
+	if strings.HasPrefix(suffix, ";") {
+		suffix = strings.TrimSpace(suffix[1:])
+	}
+	wrapped := make([]string, 0, len(replacement)+2)
+	if prefix != "" {
+		wrapped = append(wrapped, prefix)
+	}
+	wrapped = append(wrapped, replacement...)
+	if suffix != "" {
+		wrapped = append(wrapped, suffix)
+	}
+	return wrapped
+}
+
+func isCommandBoundary(char byte) bool {
+	return isShellWhitespace(char) || char == ';' || char == '{'
+}
+
+func isShellWhitespace(char byte) bool {
+	return char == ' ' || char == '\t'
+}
+
+func leadingWhitespace(value string) string {
+	end := 0
+	for end < len(value) && isShellWhitespace(value[end]) {
+		end++
+	}
+	return value[:end]
+}
+
 func expandSegment(segment string, environment map[string]string) (string, error) {
 	if strings.Contains(segment, "$(") || strings.Contains(segment, "`") {
 		return "", fmt.Errorf("command substitution in PATH segment is unsupported")
@@ -397,6 +603,48 @@ func expandSegment(segment string, environment map[string]string) (string, error
 	return os.Expand(segment, func(key string) string {
 		return environment[key]
 	}), nil
+}
+
+type pathmungeCall struct {
+	kind  string
+	value string
+}
+
+func parsePathmunge(line string) (pathmungeCall, bool) {
+	match := pathmungePattern.FindStringSubmatch(line)
+	if match == nil {
+		return pathmungeCall{}, false
+	}
+	value, ok := parseShellWord(match[3])
+	if !ok {
+		return pathmungeCall{}, false
+	}
+	return pathmungeCall{kind: match[2], value: value}, true
+}
+
+func parseShellWord(value string) (string, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", false
+	}
+	if value[0] == '\'' || value[0] == '"' {
+		quote := value[0]
+		for index := 1; index < len(value); index++ {
+			if value[index] == quote && value[index-1] != '\\' {
+				trailing := strings.TrimSpace(value[index+1:])
+				if trailing != "" && !strings.HasPrefix(trailing, "#") {
+					return "", false
+				}
+				return value[1:index], true
+			}
+		}
+		return "", false
+	}
+	fields := strings.Fields(value)
+	if len(fields) == 0 || (len(fields) > 1 && !strings.HasPrefix(fields[1], "#")) {
+		return "", false
+	}
+	return fields[0], true
 }
 
 func isPATHAnchor(segment string) bool {

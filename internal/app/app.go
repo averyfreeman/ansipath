@@ -378,4 +378,8 @@ Usage:
 
 With no command, ansipath renders the current PATH. A positional PATH
 argument renders that value instead.
+
+remove-dupes edits existing shell-init files, prints an audit trail, and asks
+Undo? N/y. With --env it only prints a cleaned export because child processes
+cannot change their parent shell environment.
 `
