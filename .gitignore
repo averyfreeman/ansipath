@@ -17,3 +17,16 @@ SUMMARY.md
 .env
 .env.local
 palettes_backup
+
+# Local credentials and generated development files
+.DS_Store
+node_modules/
+.venv/
+.build/
+.uv-cache/
+.gocache/
+.pytest_cache/
+.ruff_cache/
+.next/
+.gradle/
+.env*
